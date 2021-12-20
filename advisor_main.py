@@ -102,13 +102,14 @@ def convert_to_null(x):
 
 
 def rank(df):
-    columns_to_apply = ['AUM (Crore)', "Expense Ratio (%)", '1 Year', '3 Years', '5 Years', '8 Years', 'Since Launch Rtn. (%)']
+    columns_to_apply = ['AUM (Crore)', "Expense Ratio (%)", '1 Year', '3 Years', '5 Years', '8 Years',
+                        'Since Launch Rtn. (%)']
     for col in columns_to_apply:
         df[col] = df[col].apply(convert_to_null)
     df["MajorCategory"] = df["Category"].apply(label_major_category)
     categories = df['Category'].unique()
     rank_columns = ['1 Year', '3 Years', '5 Years', '8 Years', 'Since Launch Rtn. (%)']
-    df = df.astype({"AUM (Crore)":float,
+    df = df.astype({"AUM (Crore)": float,
                     "Expense Ratio (%)": float,
                     "1 Year": float,
                     "3 Years": float,
@@ -126,6 +127,8 @@ def rank(df):
             df_temp[f"{col}_rnkCat"] = df_temp[col].rank(ascending=False, method='max')
         for col in rank_columns:
             df_temp[f"{col}_normCat"] = (df_temp[col] - df_temp[col].mean()) / df_temp[col].std()
+        df_temp_values = df_temp.loc[:, [f"{col}_normCat" for col in rank_columns[:-1]]]
+        df_temp['Category_pval'] = df_temp_values.mean(axis=1) / df_temp_values.std(axis=1)
         df_final = df_final.append(df_temp)
         df_final = df_final.append(df_temp2)
 
@@ -138,9 +141,23 @@ def rank(df):
             df_temp[f"{col}_rnkMajor"] = df_temp[col].rank(ascending=False, method='max')
         for col in rank_columns:
             df_temp[f"{col}_normMajor"] = (df_temp[col] - df_temp[col].mean()) / df_temp[col].std()
+        df_temp_values = df_temp.loc[:, [f"{col}_normMajor" for col in rank_columns[:-1]]]
+        df_temp['majCat_pval'] = df_temp_values.mean(axis=1) / df_temp_values.std(axis=1)
         df_final2 = df_final2.append(df_temp)
         df_final2 = df_final2.append(df_temp2)
-    return df_final2
+
+    df_final3 = pd.DataFrame()
+    df_temp = df_final2.loc[~pd.isna(df_final2['AUM (Crore)'])].copy()
+    df_temp2 = df_final2.loc[pd.isna(df_final2['AUM (Crore)'])].copy()
+    for col in rank_columns:
+        df_temp[f"{col}_rnkAll"] = df_temp[col].rank(ascending=False, method='max')
+    for col in rank_columns:
+        df_temp[f"{col}_normAll"] = (df_temp[col] - df_temp[col].mean()) / df_temp[col].std()
+    df_temp_values = df_temp.loc[:, [f"{col}_normAll" for col in rank_columns[:-1]]]
+    df_temp['all_pval'] = df_temp_values.mean(axis=1) / df_temp_values.std(axis=1)
+    df_final3 = df_final3.append(df_temp)
+    df_final3 = df_final3.append(df_temp2)
+    return df_final3
 
 
 def main():
@@ -152,11 +169,11 @@ def main():
     #     df_all.to_excel(writer)
 
     # input("Correct columns and save excel file")
-    df_all.columns=['Scheme Name', "AUM (Crore)", "Expense Ratio (%)", "1 Year", "1 Year_rnk", 
-                    "3 Years", "3 Years_rnk", "5 Years", "5 Years_rnk", "8 Years", "8 Years_rnk",
-                    "Since Launch Rtn. (%)", "Category"]
-    df = df_all.drop(["1 Year_rnk","3 Years_rnk","5 Years_rnk","8 Years_rnk"], axis=1)
     # df_all = pd.read_excel(excel_file)
+    df_all.columns = ['Scheme Name', "AUM (Crore)", "Expense Ratio (%)", "1 Year", "1 Year_rnk",
+                      "3 Years", "3 Years_rnk", "5 Years", "5 Years_rnk", "8 Years", "8 Years_rnk",
+                      "Since Launch Rtn. (%)", "Category"]
+    df = df_all.drop(["1 Year_rnk", "3 Years_rnk", "5 Years_rnk", "8 Years_rnk"], axis=1)
     df_ranked = rank(df)
     with pd.ExcelWriter("ranked_norm_fullout.xlsx",
                         engine='xlsxwriter',
