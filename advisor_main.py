@@ -129,6 +129,7 @@ def rank(df):
             df_temp[f"{col}_normCat"] = (df_temp[col] - df_temp[col].mean()) / df_temp[col].std()
         df_temp_values = df_temp.loc[:, [f"{col}_normCat" for col in rank_columns[:-1]]]
         df_temp['Category_pval'] = df_temp_values.mean(axis=1) / df_temp_values.std(axis=1)
+        df_temp['Category_pvalNorm'] = (df_temp['Category_pval'] - df_temp['Category_pval'].mean()) / df_temp['Category_pval'].std()
         df_final = df_final.append(df_temp)
         df_final = df_final.append(df_temp2)
 
@@ -143,6 +144,7 @@ def rank(df):
             df_temp[f"{col}_normMajor"] = (df_temp[col] - df_temp[col].mean()) / df_temp[col].std()
         df_temp_values = df_temp.loc[:, [f"{col}_normMajor" for col in rank_columns[:-1]]]
         df_temp['majCat_pval'] = df_temp_values.mean(axis=1) / df_temp_values.std(axis=1)
+        df_temp['majCat_pvalNorm'] = (df_temp['majCat_pval'] - df_temp['majCat_pval'].mean()) / df_temp['majCat_pval'].std()
         df_final2 = df_final2.append(df_temp)
         df_final2 = df_final2.append(df_temp2)
 
@@ -155,6 +157,7 @@ def rank(df):
         df_temp[f"{col}_normAll"] = (df_temp[col] - df_temp[col].mean()) / df_temp[col].std()
     df_temp_values = df_temp.loc[:, [f"{col}_normAll" for col in rank_columns[:-1]]]
     df_temp['all_pval'] = df_temp_values.mean(axis=1) / df_temp_values.std(axis=1)
+    df_temp['all_pvalNorm'] = (df_temp['all_pval'] - df_temp['all_pval'].mean()) / df_temp['all_pval'].std()
     df_final3 = df_final3.append(df_temp)
     df_final3 = df_final3.append(df_temp2)
     return df_final3
