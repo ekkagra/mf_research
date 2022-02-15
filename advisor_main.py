@@ -1,6 +1,7 @@
 import requests
 import pandas as pd
 import numpy as np
+from datetime import datetime as dt
 
 category = ["Childrens Fund",
             "Debt: Banking and PSU",
@@ -178,7 +179,8 @@ def main():
                       "Since Launch Rtn. (%)", "Category"]
     df = df_all.drop(["1 Year_rnk", "3 Years_rnk", "5 Years_rnk", "8 Years_rnk"], axis=1)
     df_ranked = rank(df)
-    with pd.ExcelWriter("ranked_norm_fullout.xlsx",
+    timestamp = dt.now().strftime("%Y%m%d_%H%M%S")
+    with pd.ExcelWriter(f"ranked_norm_fullout_{timestamp}.xlsx",
                         engine='xlsxwriter',
                         options={'strings_to_numbers': True}) as writer:
         df_ranked.to_excel(writer)
