@@ -56,6 +56,16 @@ category = ["Childrens Fund",
             "Index Fund",
             "Retirement Fund"]
 
+COLUMN_NAMES = ['Scheme Name', "Launch date", "AUM (Crore)", "Expense Ratio (%)", "1 Year", "1 Year_rnk",
+                "3 Years", "3 Years_rnk", "5 Years", "5 Years_rnk", "8 Years", "8 Years_rnk",
+                "Since Launch Rtn. (%)", "Category"]
+COLUMN_NAMES2 = ['Scheme Name', "Sub Category", "Launch date", "AUM (Crore)", "Expense Ratio (%)", "1 Year",
+                 "3 Years", "5 Years", "8 Years", "Since Launch Rtn. (%)", "Category"]
+
+FINAL_COLUMN_NAMES = ['Scheme Name', "Sub Category", "Launch date", "AUM (Crore)", "Expense Ratio (%)", "1 Year",
+                      "1 Year_rnk", "3 Years", "3 Years_rnk", "5 Years", "5 Years_rnk", "8 Years", "8 Years_rnk",
+                      "Since Launch Rtn. (%)", "Category"]
+
 
 def fetch_data():
     url = "https://www.advisorkhoj.com/mutual-funds-research/" \
@@ -71,16 +81,33 @@ def fetch_data():
             "mode": "Growth",
             "option": "Direct"
         }
+        if ele in ["ETFs", "Index Fund"]:
+            payload["subcategory"] = "All"
         resp = requests.get(url, params=payload)
         df_list = pd.read_html(resp.text)
         if df_list:
-            df = df_list[0]
-            df["", "Category"] = ele
-            captured_data.append(df)
+            if ele not in ["ETFs", "Index Fund"]:
+                df = df_list[0]
+                df["", "Category"] = ele
+                df.columns = COLUMN_NAMES
+                df["Sub Category"] = ele
+                df = df[FINAL_COLUMN_NAMES]
+                captured_data.append(df)
+            else:
+                df = df_list[0]
+                df["Category"] = ele
+                df.columns = COLUMN_NAMES2
+                df["1 Year_rnk"] = np.nan
+                df["3 Years_rnk"] = np.nan
+                df["5 Years_rnk"] = np.nan
+                df["8 Years_rnk"] = np.nan
+                df = df[FINAL_COLUMN_NAMES]
+                captured_data.append(df)
 
     combined = pd.DataFrame()
     for each_df in captured_data:
-        combined = combined.append(each_df)
+        if len(each_df) != 0:
+            combined = combined.append(each_df)
     return combined
 
 
@@ -130,7 +157,8 @@ def rank(df):
             df_temp[f"{col}_normCat"] = (df_temp[col] - df_temp[col].mean()) / df_temp[col].std()
         df_temp_values = df_temp.loc[:, [f"{col}_normCat" for col in rank_columns[:-1]]]
         df_temp['Category_pval'] = df_temp_values.mean(axis=1) / df_temp_values.std(axis=1)
-        df_temp['Category_pvalNorm'] = (df_temp['Category_pval'] - df_temp['Category_pval'].mean()) / df_temp['Category_pval'].std()
+        df_temp['Category_pvalNorm'] = (df_temp['Category_pval'] - df_temp['Category_pval'].mean()) / df_temp[
+            'Category_pval'].std()
         df_final = df_final.append(df_temp)
         df_final = df_final.append(df_temp2)
 
@@ -145,7 +173,8 @@ def rank(df):
             df_temp[f"{col}_normMajor"] = (df_temp[col] - df_temp[col].mean()) / df_temp[col].std()
         df_temp_values = df_temp.loc[:, [f"{col}_normMajor" for col in rank_columns[:-1]]]
         df_temp['majCat_pval'] = df_temp_values.mean(axis=1) / df_temp_values.std(axis=1)
-        df_temp['majCat_pvalNorm'] = (df_temp['majCat_pval'] - df_temp['majCat_pval'].mean()) / df_temp['majCat_pval'].std()
+        df_temp['majCat_pvalNorm'] = (df_temp['majCat_pval'] - df_temp['majCat_pval'].mean()) / df_temp[
+            'majCat_pval'].std()
         df_final2 = df_final2.append(df_temp)
         df_final2 = df_final2.append(df_temp2)
 
@@ -174,10 +203,8 @@ def main():
 
     # input("Correct columns and save excel file")
     # df_all = pd.read_excel(excel_file)
-    df_all.columns = ['Scheme Name', "AUM (Crore)", "Expense Ratio (%)", "1 Year", "1 Year_rnk",
-                      "3 Years", "3 Years_rnk", "5 Years", "5 Years_rnk", "8 Years", "8 Years_rnk",
-                      "Since Launch Rtn. (%)", "Category"]
-    df = df_all.drop(["1 Year_rnk", "3 Years_rnk", "5 Years_rnk", "8 Years_rnk"], axis=1)
+    df_all.columns = FINAL_COLUMN_NAMES
+    df = df_all.drop(["1 Year_rnk", "3 Years_rnk", "5 Years_rnk", "8 Years_rnk", "Launch date", "Sub Category"], axis=1)
     df_ranked = rank(df)
     timestamp = dt.now().strftime("%Y%m%d_%H%M%S")
     with pd.ExcelWriter(f"ranked_norm_fullout_{timestamp}.xlsx",
