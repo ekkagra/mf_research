@@ -107,7 +107,7 @@ def fetch_data():
     combined = pd.DataFrame()
     for each_df in captured_data:
         if len(each_df) != 0:
-            combined = combined.append(each_df)
+            combined = pd.concat([combined, each_df], ignore_index=True)
     return combined
 
 
@@ -159,8 +159,8 @@ def rank(df):
         df_temp['Category_pval'] = df_temp_values.mean(axis=1) / df_temp_values.std(axis=1)
         df_temp['Category_pvalNorm'] = (df_temp['Category_pval'] - df_temp['Category_pval'].mean()) / df_temp[
             'Category_pval'].std()
-        df_final = df_final.append(df_temp)
-        df_final = df_final.append(df_temp2)
+        df_final = pd.concat([df_final, df_temp], ignore_index=True)
+        df_final = pd.concat([df_final, df_temp2], ignore_index=True)
 
     df_final2 = pd.DataFrame()
     for cat in ["Debt", "Equity", "Hybrid"]:
@@ -175,8 +175,8 @@ def rank(df):
         df_temp['majCat_pval'] = df_temp_values.mean(axis=1) / df_temp_values.std(axis=1)
         df_temp['majCat_pvalNorm'] = (df_temp['majCat_pval'] - df_temp['majCat_pval'].mean()) / df_temp[
             'majCat_pval'].std()
-        df_final2 = df_final2.append(df_temp)
-        df_final2 = df_final2.append(df_temp2)
+        df_final2 = pd.concat([df_final2, df_temp], ignore_index=True)
+        df_final2 = pd.concat([df_final2, df_temp2], ignore_index=True)
 
     df_final3 = pd.DataFrame()
     df_temp = df_final2.loc[~pd.isna(df_final2['AUM (Crore)'])].copy()
@@ -188,8 +188,8 @@ def rank(df):
     df_temp_values = df_temp.loc[:, [f"{col}_normAll" for col in rank_columns[:-1]]]
     df_temp['all_pval'] = df_temp_values.mean(axis=1) / df_temp_values.std(axis=1)
     df_temp['all_pvalNorm'] = (df_temp['all_pval'] - df_temp['all_pval'].mean()) / df_temp['all_pval'].std()
-    df_final3 = df_final3.append(df_temp)
-    df_final3 = df_final3.append(df_temp2)
+    df_final3 = pd.concat([df_final3, df_temp], ignore_index=True)
+    df_final3 = pd.concat([df_final3, df_temp2], ignore_index=True)
     return df_final3
 
 
@@ -209,7 +209,7 @@ def main():
     timestamp = dt.now().strftime("%Y%m%d_%H%M%S")
     with pd.ExcelWriter(f"ranked_norm_fullout_{timestamp}.xlsx",
                         engine='xlsxwriter',
-                        options={'strings_to_numbers': True}) as writer:
+                        engine_kwargs={'options':{'strings_to_numbers': True}}) as writer:
         df_ranked.to_excel(writer)
 
 
