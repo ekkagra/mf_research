@@ -3,6 +3,7 @@ from __future__ import annotations
 import requests
 import pandas as pd
 import numpy as np
+from io import StringIO
 from datetime import datetime as dt
 import argparse
 from typing import Callable
@@ -119,7 +120,8 @@ def fetch_data(base_url: str, payload_gen: Callable) -> list[tuple[str, pd.DataF
 
         payload: dict = payload_gen(cat)
         resp = requests.get(base_url, params=payload)
-        df_list = pd.read_html(resp.text)
+        print(base_url, payload)
+        df_list = pd.read_html(StringIO(resp.text))
         for df in df_list:
             captured_data.append((cat, df))
     return captured_data
